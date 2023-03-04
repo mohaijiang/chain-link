@@ -1,25 +1,23 @@
 <template>
   <div class="create-edit-request">
-    <div class="title">{{ title + ' Script' }}</div>
-
+    <div class="title">{{ title + ' Request' }}</div>
 
     <div class="param-left">
       <a-form :modal="updateFormData" layout="vertical">
         <a-form-item label="Request Name" :rules="[{ required: true }]">
-          <a-input v-model:value="updateFormData.name"></a-input>
+          <a-input v-model:value="updateFormData.name" autocomplete="off"></a-input>
         </a-form-item>
       </a-form>
     </div>
 
-
-    <div class="content">Script Config</div>
+    <div class="content">Request Config</div>
     <div class="param-left">
       <RequestConfig @submitRequestConfigForm="submitRequestConfigForm" ref="requestConfigFormRef"
         :requestConfigData="updateFormData.requestConfig">
       </RequestConfig>
     </div>
 
-    <div class="content">Script Content</div>
+    <div class="content">Request Content</div>
 
     <!-- 定义参数名 -->
     <div class="request-box">
@@ -93,25 +91,66 @@ const submitParamsForm = (val: any) => {
 }
 
 const submitRequestForm = (val: any) => {
+  // console.log(val, '999999999999')
   Object.assign(requestDBdata.value, val);
-  // console.log(val, 'submitRequestForm')
-  setRequestFunction(val)
+  val.forEach((item: any) => {
+    setRequestFunction(item)
+  })
+  // setRequestFunction(val)
 }
 
-const setRequestFunction = (data: any) => {
-  // requestValue.value = [];
-  Object.assign(requestValue.value, []);
-  data.map((item: any) => {
-    let str = '';
-    str += `
-cosnt ${item.formData.requestName} = Functions.makeHttpRequest({
-  url: '${item.formData.URL}',
-  method: '${item.formData.method}',
-})
-const [${item.formData.responseName}] = await Promise.all([${item.formData.requestName}])
+const setRequestFunction = async (data: any) => {
+  requestValue.value = [];
+  let str = '';
+  str += `
+    cosnt ${data.formData.requestName} = Functions.makeHttpRequest({
+    url: ${data.formData.URL},
+    method: ${data.formData.method},`
+
+  const hearders = await setMapList(data.formData.headers);
+  const params = await setMapList(data.formData.params);
+  const datas = await setMapList(data.formData.data);
+
+
+  if (hearders) {
+    str +=
+      `
+      header: {${hearders}},
+     `
+  }
+  if (params) {
+    str +=
+      `params: {${params}},
+     `
+  }
+
+  if (datas) {
+    str +=
+      ` data: {${datas}},
     `
-    requestValue.value.push(str);
+  }
+
+  str +=
+    `timeout: ${data.formData.timeout},
+    responseType: ${data.formData.responseType},
+    })
+
+    const [${data.formData.responseName}] = await Promise.all([${data.formData.requestName}])
+  `
+  requestValue.value.push(str);
+}
+
+
+const setMapList = (data: any) => {
+  let str = ''
+  data.map((item: any) => {
+    if (item.value && item.value !== '') {
+      str += `${item.key}: ${item.value},`
+    }
   })
+  str = str.substring(0, str.length - 1);
+  console.log(str, 'str')
+  return str
 }
 
 const getFunctionData = (val: string) => {
@@ -281,6 +320,7 @@ onMounted(async () => {
   .request-left,
   .request-right {
     flex: 1;
+    max-width: 50%;
   }
 }
 </style>

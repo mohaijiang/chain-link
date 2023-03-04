@@ -50,6 +50,7 @@ const columns = [
 ]
 
 const createRequest = (val: string) => {
+  localStorage.removeItem('requestsListData');
   router.push(`/create-request/${val}/0`)
 }
 
@@ -65,7 +66,6 @@ const deleteRequest = (val: any) => {
 
 const getRequestList = () => {
   chainLinkDBApi.getAllRequests().then(res => {
-    // console.log(res, 'getValue')
     requestDataList.value = res
   })
 }
