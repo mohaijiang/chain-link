@@ -4,7 +4,9 @@ module.exports = defineConfig({
   transpileDependencies: true,
   lintOnSave: false,
   devServer: {
-    open: 'http://localhost:8080',
+    //open: 'http://localhost:8080',
+    hot: false,
+    liveReload: false
   },
   configureWebpack: {
     resolve: {
