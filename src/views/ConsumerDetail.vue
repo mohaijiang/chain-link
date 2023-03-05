@@ -89,6 +89,7 @@ import { ethers } from "ethers";
 import { encryptWithPublicKey } from "@/utils/encryptSecrets";
 import { ExecuteRequest } from "@/db/chainlinkDB";
 import dayjs from "dayjs";
+import { decodeText } from "@/utils/decodeText";
 const chainlinkDB = useChainlinkDB();
 const contractApi = useContractApi();
 const consumerApi = shallowRef();
@@ -283,9 +284,10 @@ const getOCRResponse = (record) => {
     let message = "";
     if (res.length > 0) {
       if (res[0].args[2] === "0x") {
-        message = `The current result is returned correctly, and the returned data is: ${res[0].args[1]}`
+        message = `The current result is returned correctly, and the returned data is: ${decodeText(res[0].args[1])}`
       } else {
-        message = "Return result error"
+        console.log("error", res[0].args[2]);
+        message = `Return result error: ${decodeText(res[0].args[2])}`
       }
     } else {
       message = "Currently no results are returned"
