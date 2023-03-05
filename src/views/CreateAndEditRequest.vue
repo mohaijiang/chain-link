@@ -103,7 +103,7 @@ const setRequestFunction = async (data: any) => {
   requestValue.value = [];
   let str = '';
   str += `
-    cosnt ${data.formData.requestName} = Functions.makeHttpRequest({
+    const ${data.formData.requestName} = Functions.makeHttpRequest({
     url: \`${data.formData.URL}\`,
     method: '${data.formData.method}',`
 
@@ -145,7 +145,7 @@ const setMapList = (data: any) => {
   let str = ''
   data.map((item: any) => {
     if (item.value && item.value !== '') {
-      str += `'${item.key}': \`${item.value}\`,`
+      str += `${item.key}: ${item.value},`
     }
   })
   str = str.substring(0, str.length - 1);
