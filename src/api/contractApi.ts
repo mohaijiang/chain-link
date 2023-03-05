@@ -4,7 +4,7 @@ interface contractApi {
   query: (methodName: string, ...args: any[]) => Promise<any>;
   sendTransaction: (methodName: string, ...args: any[]) => Promise<any>;
   getContract: () => Contract;
-  events: (eventName: string, fromBlock?: string, toBlock?: string, ...args: any[]) => Promise<any>
+  events: (eventName: string, fromBlock?: number, toBlock?: number, ...args: any[]) => Promise<any>
 }
 
 export function createContractApi(
@@ -29,7 +29,7 @@ export function createContractApi(
     return contract;
   }
 
-  const events = async (eventName: string, fromBlock?: string, toBlock?: string, ...args: any[]): Promise<any> => {
+  const events = async (eventName: string, fromBlock?: number, toBlock?: number, ...args: any[]): Promise<any> => {
     const filter = contract.filters[eventName](...args);
     return contract.queryFilter(filter, fromBlock, toBlock);
   };

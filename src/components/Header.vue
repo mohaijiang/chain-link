@@ -1,7 +1,7 @@
 <template>
   <div class="header">
     <div class="header-left">
-      <div class="header-title">Chainlink</div>
+      <div class="header-title">CLFunctionsGUI</div>
       <a-menu v-model:selectedKeys="current" mode="horizontal">
         <a-menu-item v-for="item in menuList" :key="item.name">
           <a href="javascript:;" @click="changePage(item)"> {{ item.name }}</a>
@@ -18,6 +18,7 @@
     </div>
     <div class="header-right">
       <a-select ref="select" v-model:value="worknetValue" @change="handleChange">
+        <a-select-option value="7a69">Development Environment</a-select-option>
         <a-select-option value="aa36a7">Ethereum Sepolia</a-select-option>
         <a-select-option value="13881">Polygon Mumbai</a-select-option>
       </a-select>
@@ -30,14 +31,14 @@
 
 <script setup lang="ts">
 import Wallets from "../components/Wallets.vue";
-import { ref, watch, onMounted } from "vue";
+import { ref, watch, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { message } from "ant-design-vue";
 import { useWalletAddress } from "@/stores/useWalletAddress";
 import { useOnboard } from '@web3-onboard/vue';
+import { useContractApi } from "@/stores/useStore";
 const { setChain } = useOnboard();
 
-const worknetValue = ref('aa36a7');
 const isConnectedWallet = ref(false);
 const showWallets = ref();
 const walletAccount = ref('');
@@ -47,6 +48,7 @@ const menuList = ref([{ name: 'Subscription', path: '/subscription' }, { name: '
 const router = useRouter();
 
 const walletAddress = useWalletAddress();
+const contractApi = useContractApi()
 
 const changePage = (val: any) => {
   localStorage.setItem('currentPageName', val.name)
@@ -59,9 +61,16 @@ const showWallet = () => {
 
 // 切换网络
 const handleChange = (val: string) => {
-  worknetValue.value = val;
   switchToChain(val)
 };
+
+const worknetValue = computed(() => {
+  if (contractApi.apiStatus) {
+    return contractApi.networkId.slice(2)
+  } else {
+    return "7a69"
+  }
+})
 
 const switchToChain = (chainId: string) => {
   window.ethereum && window.ethereum.request({

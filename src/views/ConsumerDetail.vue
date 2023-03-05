@@ -29,19 +29,19 @@
 
   <a-modal v-model:visible="visible" title="Send Request" :footer="null">
     <a-form :model="requestModal" ref="formRef">
-      <a-form-item label="subscriptionId" :rules="{ required: true }">
+      <a-form-item label="Subscription Id" :rules="{ required: true }">
         <a-select v-model:value="requestModal.subscriptionId" :options="subscriptionsList" />
       </a-form-item>
 
-      <a-form-item label="requestId" :rules="{ required: true }">
+      <a-form-item label="Request Name" :rules="{ required: true }">
         <a-select v-model:value="requestModal.requestId" :options="requestList" @change="changeRequestId" />
       </a-form-item>
 
-      <a-form-item label="secretsLocation" :rules="{ required: false }">
+      <a-form-item label="SecretsLocation" :rules="{ required: false }">
         <a-input v-model:value="selectRequestModalData.secretsLocationName" disabled></a-input>
       </a-form-item>
 
-      <a-form-item label="secretsURL" :rules="{ required: false }" v-if="selectRequestModalData.secretsURL">
+      <a-form-item label="SecretsURL" :rules="{ required: false }" v-if="selectRequestModalData.secretsURL">
         <a-input v-model:value="selectRequestModalData.secretsURL" disabled></a-input>
       </a-form-item>
 
@@ -72,17 +72,17 @@
       </a-space>
 
       <div class="btn-box">
-        <a-button class="confirm-btn" @click="clickSend">Confirm</a-button>
+        <a-button class="confirm-btn" :loading="loading" @click="clickSend">Confirm</a-button>
         <a-button @click="cancelBtn">cancel</a-button>
       </div>
     </a-form>
   </a-modal>
 </template>
 <script lang='ts' setup>
-import { ref, watch, reactive, shallowRef } from "vue";
+import { ref, watch, reactive, shallowRef, h } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useChainlinkDB, useContractApi } from "@/stores/useStore";
-import { FormInstance, Modal } from 'ant-design-vue';
+import { FormInstance, message, Modal } from 'ant-design-vue';
 import { ConsumerApi } from "@/api/consumerApi";
 import { networkConfig } from "@/api/contractConfig";
 import { ethers } from "ethers";
@@ -98,6 +98,7 @@ const detailList = ref([]);
 const executeList: Ref<ExecuteRequest[]> = ref([]);
 const visible = ref(false);
 const formRef = ref<FormInstance>();
+const loading = ref(false);
 
 const requestModal = ref({
   subscriptionId: '',
@@ -187,7 +188,9 @@ const clickSend = async () => {
     console.log("secretsLocation", secretsLocation)
     console.log("subscriptionId", subscriptionId)
     console.log("address", consumerApi.value.contract.address);
+    loading.value = true
     consumerApi.value.executeRequest(source, secrets, secretsLocation, args, subscriptionId, gasLimit).then(receipt => {
+      loading.value = false
       console.log(receipt, 'res')
       consumerApi.value.latestRequestId().then(execId => {
         console.log("requestId", execId);
@@ -201,14 +204,20 @@ const clickSend = async () => {
           secretsLocation: secretsLocation.toFixed(),
           args: args,
           subscriptionId: Number(subscriptionId),
-          gasLimit: gasLimit
+          gasLimit: gasLimit,
+          blockNumber: receipt.blockNumber
         }
         addEcecute(executRequest);
         visible.value = false;
       })
+    }, error => {
+      message.error(error)
+      loading.value = false;
     })
   } catch (error) {
     console.log('error', error);
+    message.error(error)
+    loading.value = false;
   }
 };
 
@@ -217,7 +226,9 @@ const buildSecrets = async (secrets, secretsURLs, secretsLocation) => {
   const provider = new ethers.providers.Web3Provider(contractApi.provider)
   const singer = provider.getSigner();
   if (secretsLocation === 0) {
-    if (Array.isArray(secrets) && secrets.length > 0) {
+    console.log("secrets", secrets)
+    if (Array.isArray(secrets) && secrets.length > 0 && secrets[0].key) {
+      console.log("secrets", secrets)
       const obj = secrets.reduce((acc, cur) => {
         acc[cur.key] = cur.value;
         return acc;
@@ -237,7 +248,7 @@ const buildSecrets = async (secrets, secretsURLs, secretsLocation) => {
       return "0x" + await encryptWithPublicKey(DONPublicKey, secretsURLs.join(" "))
     }
   }
-  return "";
+  return "0x";
 }
 
 
@@ -247,10 +258,14 @@ const addEcecute = (executRequest: ExecuteRequest) => {
 
 
 const getExecuteList = () => {
-  // chainlinkDB.chainLinkDBApi.searchExecuteRequestByConsumerContractId().then(res => { console.og(res) executeList.value = res})
+  chainlinkDB.chainLinkDBApi.searchExecuteRequestByConsumerContractId(Number(params.id))
+    .then(res => {
+      executeList.value = res
+    })
 }
 
 const changeRequestId = (val: any) => {
+  console.log("val", val);
   const data = requestList.value.find(item => { return item.id == val });
   const { requestConfig } = data;
   const argsResult = requestConfig.args.some(val => { return val.value !== '' });
@@ -263,7 +278,8 @@ const changeRequestId = (val: any) => {
 }
 
 const getOCRResponse = (record) => {
-  consumerApi.value.eventOCRResponse(record.execId).then(res => {
+  const fromBlock = record.blockNumber ? record.blockNumber : undefined;
+  consumerApi.value.eventOCRResponse(record.execId, fromBlock).then(res => {
     let message = "";
     if (res.length > 0) {
       if (res[0].args[2] === "0x") {
@@ -300,7 +316,7 @@ const getSubscriptions = () => {
   chainlinkDB.chainLinkDBApi.getAllSubscriptions().then(res => {
     // console.log(res, '9090')
     res.map((item: any) => {
-      item.lable = item.id;
+      item.label = item.id;
       item.value = item.id;
       subscriptionsList.value.push(item)
     })
@@ -311,8 +327,8 @@ const getRequestList = () => {
   chainlinkDB.chainLinkDBApi.getAllRequests().then(res => {
     // console.log(res, 'getValue')
     res.map((item: any) => {
-      item.lable = item.id;
-      item.value = item.name;
+      item.label = item.name;
+      item.value = item.id;
       requestList.value.push(item)
     })
     console.log(requestList.value, '999')
@@ -327,6 +343,7 @@ const sendRequest = async (val: any) => {
 
 const cancelBtn = () => {
   visible.value = false;
+  loading.value = false
   formRef.value.resetFields();
 }
 

@@ -23,8 +23,8 @@
       </a-form>
     </div>
     <div class="modal-btn">
-      <a-button @click='visible = false'>Cancel</a-button>
       <a-button @click="deployBtn" :loading="loading">Deploy</a-button>
+      <a-button @click='cancelBtn'>Cancel</a-button>
     </div>
   </a-modal>
 
@@ -135,10 +135,16 @@ const deployBtn = async () => {
     } catch (err: any) {
       console.log("err", err)
       message.error(err)
+      loading.value = false;
     } finally {
       loading.value = false;
     }
   }
+}
+
+const cancelBtn = () => {
+  visible.value = false
+  loading.value = false;
 }
 
 const getAllTemplateList = async () => {

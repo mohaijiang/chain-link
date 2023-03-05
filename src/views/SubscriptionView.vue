@@ -1,30 +1,33 @@
 <template>
-  <div class="subscription-view">
-    <a-button @click="createSubscription">Create Subscription</a-button>
-    <div class="subscriptions-list">
-      <div class="subscriptions-title">My Subscriptions</div>
-    </div>
+  <a-spin :spinning="spinning">
+    <div class="subscription-view">
+      <a-button @click="createSubscription">Create Subscription</a-button>
+      <div class="subscriptions-list">
+        <div class="subscriptions-title">My Subscriptions</div>
+      </div>
 
-    <a-tabs v-model:activeKey="activeKey" class="subscription-table">
-      <a-tab-pane key="1" tab="Active">
-        <a-table :dataSource="subscriptionList" :columns="columns" :pagination="false">
-          <template #bodyCell="{ column, text }">
-            <template v-if="column.dataIndex === 'id'">
-              <div class="table-detail" @click="toDetail(text)">
-                <span class="point"></span>
-                <a>{{ text }}</a>
-              </div>
+      <a-tabs v-model:activeKey="activeKey" class="subscription-table">
+        <a-tab-pane key="1" tab="Active">
+          <a-table :dataSource="subscriptionList" :columns="columns" :pagination="false">
+            <template #bodyCell="{ column, text }">
+              <template v-if="column.dataIndex === 'id'">
+                <div class="table-detail" @click="toDetail(text)">
+                  <span class="point"></span>
+                  <a>{{ text }}</a>
+                </div>
+              </template>
+              <template v-if="column.dataIndex === 'balance'">
+                <div>
+                  {{ text + ' Link' }}
+                </div>
+              </template>
             </template>
-            <template v-if="column.dataIndex === 'balance'">
-              <div>
-                {{ text + ' Link' }}
-              </div>
-            </template>
-          </template>
-        </a-table>
-      </a-tab-pane>
-    </a-tabs>
-  </div>
+          </a-table>
+        </a-tab-pane>
+      </a-tabs>
+    </div>
+  </a-spin>
+
 
   <Wallets ref="showWallets"></Wallets>
 </template>
@@ -36,9 +39,11 @@ import Wallets from "../components/Wallets.vue";
 import dayjs from 'dayjs';
 import { Subscription } from "@/db/chainlinkDB";
 import { useChainlinkDB, useContractApi } from "@/stores/useStore";
+import { message } from "ant-design-vue";
 const chainlinkDB = useChainlinkDB()
 const contractApi = useContractApi()
 
+const spinning = ref(false);
 const router = useRouter();
 const showWallets = ref();
 const activeKey = ref('1');
@@ -98,6 +103,7 @@ watch([() => chainlinkDB.networkId, () => chainlinkDB.apiStatus, () => contractA
 
 const createSubscription = () => {
   if (contractApi.apiStatus) {
+    spinning.value = true;
     contractApi.registryApi?.createSubscription().then(receipt => {
       //console.log("receipt:", receipt);
       const events = contractApi.registryApi?.contract.interface.parseLog(receipt.logs[0]);
@@ -112,6 +118,10 @@ const createSubscription = () => {
       };
       chainlinkDB.apiStatus && chainlinkDB.chainLinkDBApi.addSubscription(subscription);
       searchSubscriptionByOwner(receipt.from.toLowerCase());
+      spinning.value = false;
+    }, error => {
+      message.error(error)
+      spinning.value = false;
     });
   } else {
     showWallets.value?.onClickConnect();

@@ -40,7 +40,7 @@ export class RegistryApi {
     });
   }
 
-  async eventSubscriptionCreated(fromBlock?: string, toBlock?: string) {
+  async eventSubscriptionCreated(fromBlock?: number, toBlock?: number) {
     return this.contractApi.events('SubscriptionCreated', fromBlock, toBlock);
   }
 

@@ -26,21 +26,24 @@
       <div class="desc">Your subscription is ready. You can now add consumers.</div>
       <a-button class="add-btn" @click="addConsumer">Add consumer</a-button>
     </div>
-    <div class="subscription-consumer-list" v-if="consumersList.length > 0">
-      <div class="consumer-title">
-        <div class="title">Consumers</div>
-        <a-button @click="addConsumer">Add consumer</a-button>
-      </div>
-      <a-table :columns="consumersColumns" :dataSource="consumersList" :pagination="false">
-        <template #bodyCell="{ column, text, record }">
-          <template v-if="column.dataIndex === 'action'">
-            <span>
-              <a @click="deleteConsumer(record)">Delete</a>
-            </span>
+    <a-spin :spinning="spinning">
+      <div class="subscription-consumer-list" v-if="consumersList.length > 0">
+        <div class="consumer-title">
+          <div class="title">Consumers</div>
+          <a-button @click="addConsumer">Add consumer</a-button>
+        </div>
+        <a-table :columns="consumersColumns" :dataSource="consumersList" :pagination="false">
+          <template #bodyCell="{ column, text, record }">
+            <template v-if="column.dataIndex === 'action'">
+              <span>
+                <a @click="deleteConsumer(record)">Delete</a>
+              </span>
+            </template>
           </template>
-        </template>
-      </a-table>
-    </div>
+        </a-table>
+      </div>
+    </a-spin>
+
   </div>
 
   <a-modal v-model:visible="addFundsVisible" title="Add Funds" :footer="null">
@@ -51,7 +54,7 @@
       </div>
       <div class="desc">Your wallet balance: {{ balanceOfLink }} LINK</div>
       <div class="btn-box">
-        <a-button class="confirm-btn" @click="confirmAddFunds">Confirm</a-button>
+        <a-button class="confirm-btn" :loading="loading" @click="confirmAddFunds">Confirm</a-button>
         <a-button class="cancel-btn" @click="cancelAddFunds">Cancel</a-button>
       </div>
 
@@ -65,7 +68,7 @@
         <a-input v-model:value="addConsumerAddress"></a-input>
       </div>
       <div class="btn-box">
-        <a-button class="confirm-btn" @click="confirmAddConsumer">Confirm</a-button>
+        <a-button class="confirm-btn" :loading="loading" @click="confirmAddConsumer">Confirm</a-button>
         <a-button class="cancel-btn" @click="cancelAddConsumer">Cancel</a-button>
       </div>
     </div>
@@ -75,6 +78,7 @@
 <script setup lang="ts">
 import { Consumer, Subscription } from "@/db/chainlinkDB";
 import { useChainlinkDB, useContractApi } from "@/stores/useStore";
+import { message } from "ant-design-vue";
 import { ethers } from "ethers";
 import { ref, Ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -91,7 +95,8 @@ const chainlinkDB = useChainlinkDB()
 const contractApi = useContractApi()
 const { chainLinkDBApi } = useChainlinkDB()
 const { registryApi, linkTokenApi, walletAddress } = useContractApi()
-
+const loading = ref(false);
+const spinning = ref(false);
 
 const fundsColumns = [
   {
@@ -157,24 +162,32 @@ const showAddFunds = () => {
 
 const cancelAddFunds = () => {
   addFundsVisible.value = false;
+  loading.value = false;
 }
 
 const confirmAddFunds = () => {
   let data = ethers.utils.defaultAbiCoder.encode(["uint64"], [params.id]);
   const weiValue = ethers.utils.parseEther(addFundsAmount.value.toString());
-  contractApi.apiStatus && linkTokenApi?.transferAndCall(registryApi?.contract.address, weiValue, data).then(receipt => {
-    console.log(receipt);
-    //update subscription
-    registryApi?.getSubscription(params.id).then(t => {
-      chainlinkDB.apiStatus && chainLinkDBApi.updateSubscriptionBalance(parseInt(params.id), ethers.utils.formatEther(t.balance)).then(data => {
-        if (data) {
-          subscriptionDetailData.value = [];
-          subscriptionDetailData.value.push(data);
-        }
-      })
-    });
-    addFundsVisible.value = false;
-  })
+  if (contractApi.apiStatus) {
+    loading.value = true
+    linkTokenApi?.transferAndCall(registryApi?.contract.address, weiValue, data).then(receipt => {
+      console.log(receipt);
+      //update subscription
+      registryApi?.getSubscription(params.id).then(t => {
+        chainlinkDB.apiStatus && chainLinkDBApi.updateSubscriptionBalance(parseInt(params.id), ethers.utils.formatEther(t.balance)).then(data => {
+          if (data) {
+            subscriptionDetailData.value = [];
+            subscriptionDetailData.value.push(data);
+          }
+        })
+      });
+      addFundsVisible.value = false;
+      loading.value = false
+    }, error => {
+      message.error(error)
+      loading.value = false
+    })
+  }
 }
 
 const addConsumer = () => {
@@ -183,37 +196,51 @@ const addConsumer = () => {
 
 const cancelAddConsumer = () => {
   addConsumerVisible.value = false
+  loading.value = false
 }
 
 const confirmAddConsumer = () => {
   console.log("contractApi.apiStatus", contractApi.apiStatus)
-  contractApi.apiStatus && registryApi?.addConsumer(parseInt(params.id), addConsumerAddress.value).then(receipt => {
-    console.log("addConsumer", receipt);
-    registryApi?.getSubscription(params.id).then(t => {
-      chainlinkDB.apiStatus && chainLinkDBApi.addSubscriptionConsumers(parseInt(params.id), t.consumers).then(data => {
-        if (data) {
-          consumersList.value = data.consumers;
-        }
-      })
-    });
-    addConsumerVisible.value = false;
-  })
+  if (contractApi.apiStatus) {
+    loading.value = true
+    registryApi?.addConsumer(parseInt(params.id), addConsumerAddress.value).then(receipt => {
+      console.log("addConsumer", receipt);
+      registryApi?.getSubscription(params.id).then(t => {
+        chainlinkDB.apiStatus && chainLinkDBApi.addSubscriptionConsumers(parseInt(params.id), t.consumers).then(data => {
+          if (data) {
+            consumersList.value = data.consumers;
+          }
+        })
+      });
+      addConsumerVisible.value = false;
+      loading.value = false
+    }, error => {
+      message.error(error)
+      loading.value = false
+    })
+  }
+
 }
 
 const deleteConsumer = (val: any) => {
-  console.log(val, 'val')
-  contractApi.apiStatus && registryApi?.removeConsumer(params.id, val.address).then(receipt => {
-    console.log("deleteConsumer", receipt);
-    registryApi?.getSubscription(params.id).then(t => {
-      chainlinkDB.apiStatus && chainLinkDBApi.removeSubscriptionConsumers(parseInt(params.id), t.consumers).then(data => {
-        if (data) {
-          consumersList.value = data.consumers;
-        }
-      })
-    });
-  })
+  if (contractApi.apiStatus) {
+    spinning.value = true
+    registryApi?.removeConsumer(params.id, val.address).then(receipt => {
+      console.log("deleteConsumer", receipt);
+      registryApi?.getSubscription(params.id).then(t => {
+        chainlinkDB.apiStatus && chainLinkDBApi.removeSubscriptionConsumers(parseInt(params.id), t.consumers).then(data => {
+          if (data) {
+            consumersList.value = data.consumers;
+          }
+        })
+      });
+      spinning.value = false
+    }, error => {
+      message.error(error)
+      loading.value = false
+    })
+  }
 }
-
 
 
 const getSubscription = (id: number) => {

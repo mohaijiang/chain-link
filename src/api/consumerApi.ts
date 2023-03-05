@@ -6,14 +6,15 @@ import { EIP1193Provider } from '@web3-onboard/core';
 export class ConsumerApi {
   private contractApi;
   public contract;
+  private provider;
 
   constructor(walletProvider: EIP1193Provider, contractAddress: string) {
 
-    const provider = new ethers.providers.Web3Provider(walletProvider)
+    this.provider = new ethers.providers.Web3Provider(walletProvider)
 
     const contractABI = abis.consumer;
 
-    this.contractApi = createContractApi(contractAddress, contractABI, provider);
+    this.contractApi = createContractApi(contractAddress, contractABI, this.provider);
 
     this.contract = this.contractApi.getContract();
   }
@@ -45,8 +46,14 @@ export class ConsumerApi {
     return this.contractApi.query('latestRequestId');
   }
 
-  async eventOCRResponse(execId: string) {
-    return this.contractApi.events('OCRResponse', undefined, undefined, execId);
+  async eventOCRResponse(execId: string, fromBlock?: number) {
+    let toBlock = undefined;
+    const blockNumber = await this.provider.blockNumber;
+    if (fromBlock) {
+      toBlock = (fromBlock + 1000) > blockNumber ? blockNumber : fromBlock + 1000;
+    }
+    console.log(fromBlock)
+    return this.contractApi.events('OCRResponse', fromBlock, toBlock, execId);
   }
 
 }

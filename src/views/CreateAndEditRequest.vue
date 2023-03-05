@@ -84,7 +84,7 @@ const updateFormData = reactive({});
 const submitParamsForm = (val: any) => {
   val.map((item: any, key: number) => {
     if (item.value !== '') {
-      item.paramsValue = `const ${item.value} = arg[${key}]`
+      item.paramsValue = `const ${item.value} = args[${key}]`
     }
   })
   paramsValue.value = val
@@ -104,8 +104,8 @@ const setRequestFunction = async (data: any) => {
   let str = '';
   str += `
     cosnt ${data.formData.requestName} = Functions.makeHttpRequest({
-    url: ${data.formData.URL},
-    method: ${data.formData.method},`
+    url: \`${data.formData.URL}\`,
+    method: '${data.formData.method}',`
 
   const hearders = await setMapList(data.formData.headers);
   const params = await setMapList(data.formData.params);
@@ -132,7 +132,7 @@ const setRequestFunction = async (data: any) => {
 
   str +=
     `timeout: ${data.formData.timeout},
-    responseType: ${data.formData.responseType},
+    responseType: '${data.formData.responseType}',
     })
 
     const [${data.formData.responseName}] = await Promise.all([${data.formData.requestName}])
@@ -145,7 +145,7 @@ const setMapList = (data: any) => {
   let str = ''
   data.map((item: any) => {
     if (item.value && item.value !== '') {
-      str += `${item.key}: ${item.value},`
+      str += `'${item.key}': \`${item.value}\`,`
     }
   })
   str = str.substring(0, str.length - 1);

@@ -110,7 +110,8 @@ export interface ExecuteRequest {
   secretsLocation: string,
   args: string[],
   subscriptionId: number,
-  gasLimit: number
+  gasLimit: number,
+  blockNumber: number
 }
 
 interface ExecuteRequestValue {
