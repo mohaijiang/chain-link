@@ -24,7 +24,7 @@ const onboard = Onboard({
       id: '0x501',
       token: 'Hamster Moonbeam',
       label: 'Hamster Moonbeam',
-      rpcUrl: `https://rpc.moonbeam.hamster-test.newtouch.com`,
+      rpcUrl: `https://rpc-moonbeam.hamster.newtouch.com`,
     }
   ],
   appMetadata: {

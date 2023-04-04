@@ -26,12 +26,14 @@ export const networkConfig: Record<string, Record<string, string>> =
     functionsPublicKey:
       "a30264e813edc9927f73e036b7885ee25445b836979cb00ef112bc644bd16de2db866fa74648438b34f52bb196ffa386992e94e0a3dc6913cee52e2e98f1619c",
   },
-  '0x7a69': {
-    linkToken: '0x11Ab4eDd714575E085DCdAA556Fccd1d41589E65',
-    functionsOracleProxy: '0x39761D27Bb1C4CaCEbf73291E35755F2E4205628',
-    functionsBillingRegistryProxy: '0xdC70567848fB048cDfE7091d54B32d3Cb2A4BCbD',
-    functionsPublicKey: '971f006163a12ee3383a00d7743334480d6b1c83fdf60497e0c520b16d1a4ee421cc61375679b63466156fee6f2f1da5a7e630ba0b1cddb2704ef907ead223db'
+  '0x501': {
+    linkToken: '0x09fBA6F441dbD890578802f08574Ac488c4D210b',
+    functionsOracleProxy: '0x430f425B6628Dd9E73Ee780B061343AacdB8998d',
+    functionsBillingRegistryProxy: '0x586c4f88aF8B347fb3D18Dbda4E069Cd794B8B2f',
+    functionsPublicKey: '0x971f006163a12ee3383a00d7743334480d6b1c83fdf60497e0c520b16d1a4ee421cc61375679b63466156fee6f2f1da5a7e630ba0b1cddb2704ef907ead223db'
   }
+
+
 }
 
 

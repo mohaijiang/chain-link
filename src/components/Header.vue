@@ -21,6 +21,7 @@
         <a-select-option value="7a69">Development Environment</a-select-option>
         <a-select-option value="aa36a7">Ethereum Sepolia</a-select-option>
         <a-select-option value="13881">Polygon Mumbai</a-select-option>
+        <a-select-option value="501">Hamster Moonbeam</a-select-option>
       </a-select>
       <a-button v-if="!isConnectedWallet" @click="showWallet">Connect Wallet</a-button>
       <div class="walletAddress" v-else>{{ walletAccount }}</div>

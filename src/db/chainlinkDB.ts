@@ -137,6 +137,11 @@ interface MyDB extends DBSchema {
     value: Subscription;
     indexes: { owner: string };
   };
+  subscription_0x501: {
+    key: number;
+    value: Subscription;
+    indexes: { owner: string };
+  };
   subscription_0x13881: {
     key: number;
     value: Subscription;
@@ -187,6 +192,9 @@ export class ChainLinkDBApi {
         store5.createIndex('owner_network', ['owner', 'network']);
         const store6 = db.createObjectStore('executeRequest', { keyPath: 'key' });
         store6.createIndex('consumerContractId', 'consumerContractId');
+
+        const store7 = db.createObjectStore('subscription_0x501', { keyPath: 'key' });
+        store7.createIndex('owner', 'owner');
       },
     });
   }
